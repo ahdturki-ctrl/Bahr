@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>تحليل عروض: (الـ) القمرية/الشمسية + الشدة + كتابة عروضية</title>
+  <title>تحليل عروض: (الـ) القمرية/الشمسية + الشدة + منع التقاء ساكنين</title>
   <style>
     :root{
       --card:#121826; --muted:#9aa4b2; --text:#e5e7eb;
@@ -71,7 +71,6 @@
       font-size:18px;
       word-break:break-word;
     }
-    .hint{color:var(--muted); font-size:16px; margin:10px 0 0}
     .warn{color:var(--warn)}
     .good{color:var(--good)}
     .bad{color:var(--bad)}
@@ -121,14 +120,17 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>تحليل عروض تفصيلي: (الـ) + الشدة + كتابة عروضية</h1>
-      <p class="sub">الشمسية داخل الجملة: حذف الألف واللام فقط. القمرية: حذف الألف وصلاً + إثبات اللام بالسكون.</p>
+      <h1>تحليل عروض تفصيلي</h1>
+      <p class="sub">
+        الشمسية وصلاً: حذف الألف واللام فقط. القمرية وصلاً: حذف الألف + إثبات اللام بالسكون.
+        جديد: إذا صار التقاء ساكنين (حرف مد ساكن + لْ) نحذف حرف المد السابق.
+      </p>
     </header>
 
     <div class="grid">
       <section class="card">
         <label for="bayt">البيت</label>
-        <textarea id="bayt" placeholder="مثال: وَالشَّمْسُ تَشْرُقُ فِي الصَّبَاحِ | وَالقَمَرُ فِي اللَّيْلِ مُنِيرٌ"></textarea>
+        <textarea id="bayt" placeholder="مثال: وَضِياءُ القَمَرِ في اللَّيْلِ | وَالشَّمْسُ في الصَّبَاحِ"></textarea>
 
         <div class="row" style="margin-top:10px">
           <button class="btn primary" id="analyze">حلّل</button>
@@ -177,6 +179,9 @@
             <div id="arudi2" class="baytBox mono">—</div>
           </div>
         </div>
+        <p class="small" style="margin-top:10px">
+          ملاحظة: تعديل منع التقاء ساكنين يظهر هنا مباشرة (حذف حرف المد قبل لْ).
+        </p>
       </section>
 
       <section class="card">
@@ -199,7 +204,7 @@
                 <th>الكلمة</th>
                 <th>النوع</th>
                 <th>ألف الوصل</th>
-                <th>العروضي (حروف فقط)</th>
+                <th>ملاحظة عروضية</th>
               </tr>
             </thead>
             <tbody id="alRows">
@@ -344,7 +349,7 @@
 
   function isHarakaChar(ch){ return VOWELS_SET.has(ch); }
 
-  // التقاط حرف + كل العلامات التابعة له (بدون Regex test/g)
+  // التقاط حرف + كل العلامات التابعة له
   function tokenizeLettersWithMarks(text){
     const out = [];
     const s = text;
@@ -374,6 +379,41 @@
       .replace(new RegExp(`[${FATHA}${DAMMA}${KASRA}${TANWIN_F}${TANWIN_D}${TANWIN_K}${DAGGER_A}]`, "g"), "");
   }
 
+  function isLongVowelLetter(ch){
+    return ch === "ا" || ch === "و" || ch === "ي" || ch === "ى";
+  }
+
+  // ====== جديد: منع التقاء ساكنين (حذف حرف المد قبل "لْ") ======
+  function dropMaddBeforeLamSukun(prevArudi, nextArudi){
+    if (!prevArudi || !nextArudi) return prevArudi;
+
+    const nt = tokenizeLettersWithMarks(nextArudi);
+    if (!(nt[0] && nt[0].ch === "ل" && (nt[0].marks || "").includes(SUKUN))) return prevArudi;
+
+    const pt = tokenizeLettersWithMarks(prevArudi);
+    if (pt.length < 2) return prevArudi;
+
+    const last = pt[pt.length - 1];
+    const before = pt[pt.length - 2];
+
+    const lastMarks = last.marks || "";
+    const isPureMadd =
+      isLongVowelLetter(last.ch) &&
+      !hasAnyVowel(lastMarks) &&
+      !lastMarks.includes(SUKUN) &&
+      !lastMarks.includes(SHADDA);
+
+    // للتقليل من حذف غير صحيح: لازم قبل المد حركة (مدّ حقيقي)
+    const beforeMarks = before.marks || "";
+    const hasVowelBefore = hasAnyVowel(beforeMarks);
+
+    if (isPureMadd && hasVowelBefore){
+      pt.pop();
+      return tokensToString(pt);
+    }
+    return prevArudi;
+  }
+
   function markTextVisual(text){
     const s = normalizeSoftKeepHarakat(text);
     if (!s) return "—";
@@ -384,7 +424,6 @@
       if (/^\s+$/.test(tok)) { out += tok; continue; }
       const w = stripEdgePunctKeepHarakat(tok);
 
-      // تمييز الشدة
       function markShaddaInWord(word){
         let res = "";
         for (let i=0; i<word.length; i++){
@@ -423,7 +462,9 @@
     return out || "—";
   }
 
-  // ==== التعديل الذي طلبتيه: الشمسية وصلاً = حذف الألف واللام فقط ====
+  // ==== (الـ) ====
+  // القمرية: حذف الألف وصلاً + إثبات اللام بالسكون
+  // الشمسية: داخل الجملة (وصلاً) حذف الألف واللام فقط، وابتداءً حذف اللام فقط
   function makeArudiWordForTaqti3(originalWord, ibtida){
     const w = stripEdgePunctKeepHarakat(originalWord);
     const tk = tokenizeLettersWithMarks(w);
@@ -446,7 +487,7 @@
     if (!next) return {orig:w, arudi:w, note:"—"};
     const isSun = SUN_LETTERS.has(next.ch);
 
-    // همزة الوصل (القمرية فقط عمليًا بعد طلبك، لكن نُبقيه عامًا)
+    // همزة الوصل: حذف الألف وصلاً إن وجدت + ابتداءً نضع فتحة للألف إن كانت بلا حركة
     if (alifIndex >= 0){
       if (!ibtida){
         tk.splice(alifIndex, 1);
@@ -462,25 +503,19 @@
     let note = "—";
 
     if (!isSun){
-      // قمرية: إثبات اللام بالسكون + حذف الألف وصلاً تم أعلاه
       const lamTok = tk[lamIndex];
       lamTok.marks = removeShortVowelsKeepShaddaSukun(lamTok.marks || "");
       if (!lamTok.marks.includes(SUKUN)) lamTok.marks += SUKUN;
       note = "قمرية: إثبات اللام بالسكون + همزة الوصل حسب الموضع";
     } else {
-      // شمسية: وصلاً (داخل الجملة) = حذف الألف واللام فقط (بدون إدغام/تفكيك)
       if (!ibtida) {
-        // (قد تكون الألف حُذفت أعلاه، لكن نضمن)
-        if (alifIndex >= 0 && tk[alifIndex] && (tk[alifIndex].ch==="ا" || tk[alifIndex].ch==="ٱ")){
-          tk.splice(alifIndex, 1);
-          if (lamIndex > alifIndex) lamIndex -= 1;
-        }
+        // وصلاً: حذف الألف واللام فقط
         if (tk[lamIndex] && tk[lamIndex].ch==="ل"){
           tk.splice(lamIndex, 1);
         }
         note = "شمسية (وصلاً): حذف الألف واللام فقط";
       } else {
-        // ابتداءً: نُبقي الألف (فتحتها إن لزم) ونحذف اللام فقط
+        // ابتداءً: حذف اللام فقط
         if (tk[lamIndex] && tk[lamIndex].ch==="ل"){
           tk.splice(lamIndex, 1);
         }
@@ -519,6 +554,19 @@
       mapped.push({idx:i+1, orig:r.orig, arudi:r.arudi, note:r.note});
       arudiWords.push(r.arudi);
     }
+
+    // ====== جديد: منع التقاء ساكنين (حذف حرف المد قبل لْ) ======
+    for (let i=0; i<arudiWords.length - 1; i++){
+      const fixedPrev = dropMaddBeforeLamSukun(arudiWords[i], arudiWords[i+1]);
+      if (fixedPrev !== arudiWords[i]){
+        arudiWords[i] = fixedPrev;
+        mapped[i].arudi = fixedPrev;
+        mapped[i].note = (mapped[i].note && mapped[i].note !== "—")
+          ? (mapped[i].note + " + حذف حرف المد قبل لْ (منع التقاء ساكنين)")
+          : "حذف حرف المد قبل لْ (منع التقاء ساكنين)";
+      }
+    }
+
     return {arudiText: arudiWords.join(" "), map: mapped};
   }
 
@@ -527,9 +575,6 @@
     if (marks.includes(DAMMA) || marks.includes(TANWIN_D)) return "u";
     if (marks.includes(KASRA) || marks.includes(TANWIN_K)) return "i";
     return "";
-  }
-  function isLongVowelLetter(ch){
-    return ch === "ا" || ch === "و" || ch === "ي" || ch === "ى";
   }
 
   function analyzeWordPatternDetailed(wordArudi){
@@ -554,6 +599,7 @@
         p += "/";
         steps.push({display: t.ch + m, sym:"/", why:"حركة: متحرك (/)"});
 
+        // التنوين: تركناه كما هو الآن (حسب طلبك السابق)
         if (m.includes(TANWIN_F) || m.includes(TANWIN_D) || m.includes(TANWIN_K)){
           p += "0";
           steps.push({display: "ـنْ (ضمن التنوين)", sym:"0", why:"تنوين: نون ساكنة"});
@@ -563,6 +609,7 @@
         steps.push({display: t.ch, sym:mode, why:(mode==="0" ? "بلا تشكيل: ساكن (حسب اختيارك)" : "بلا تشكيل: متحرك (حسب اختيارك)")});
       }
 
+      // المدّ: ساكن بعد حركة مناسبة
       const vt = vowelType(m);
       if (vt && i+1 < tks.length) {
         const n = tks[i+1];
@@ -640,17 +687,11 @@
       const isSun = SUN_LETTERS.has(next.ch);
       const kind = isSun ? "شمسية" : "قمرية";
       const hamzaWasl = (alifIndex>=0 ? (ibtida ? "تُنطق ابتداءً" : "لا تُنطق وصلاً") : "لا ألف");
+      const note = isSun
+        ? (ibtida ? "ابتداءً: حذف اللام فقط" : "وصلاً: حذف الألف واللام فقط")
+        : "وصلاً: لْ في البداية (قد يسبب التقاء ساكنين)";
 
-      // عرض حروفي فقط
-      let arudiLettersOnly = "";
-      if (!isSun){
-        arudiLettersOnly = (ibtida && alifIndex>=0 ? "اَلْ" : "لْ") + tk.slice(lamIndex+1).map(t=>t.ch).join("");
-      } else {
-        // طلبك: الشمسية وصلاً = حذف الألف واللام فقط
-        arudiLettersOnly = (ibtida && alifIndex>=0 ? "اَ" : "") + tk.slice(lamIndex+1).map(t=>t.ch).join("");
-      }
-
-      items.push({ word: raw, kind, hamzaWasl, arudi: arudiLettersOnly });
+      items.push({ word: raw, kind, hamzaWasl, note });
     }
     return {items};
   }
@@ -670,7 +711,7 @@
         <td><strong>${escapeHtml(it.word)}</strong></td>
         <td><span class="${cls}">${it.kind}</span></td>
         <td>${escapeHtml(it.hamzaWasl)}</td>
-        <td class="mono">${escapeHtml(it.arudi)}</td>
+        <td class="small">${escapeHtml(it.note)}</td>
       `;
       body.appendChild(tr);
     });
@@ -758,7 +799,8 @@
   document.querySelectorAll('input[name="unvowel"]').forEach(r => r.addEventListener("change", applyAnalysis));
 
   el("demo").addEventListener("click", ()=>{
-    el("bayt").value = "وَالشَّمْسُ تَشْرُقُ فِي الصَّبَاحِ | وَالشَّمْسُ فِي اللَّيْلِ لا تُرَى";
+    // مثال يوضح القاعدة الجديدة: (ضياءُ القمر) قد ينتج ... ضياءُ لْقمر ... فيُحذف الألف الأخيرة لمنع التقاء ساكنين
+    el("bayt").value = "وَضِياءُ القَمَرِ في اللَّيْلِ | وَنُورُ القَمَرِ في السَّحَرِ";
     applyAnalysis();
   });
 
