@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>كاشف البحر الشعري (تجريبي)</title>
+  <title>كاشف البحر الشعري + تمييز (ال) القمرية/الشمسية</title>
   <style>
     :root{
       --bg:#0b0f14;
@@ -15,6 +15,8 @@
       --warn:#fbbf24;
       --bad:#fb7185;
       --border:#243042;
+      --sun:#fbbf24;
+      --moon:#60a5fa;
     }
     *{box-sizing:border-box}
     body{
@@ -22,7 +24,7 @@
       color:var(--text); font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
       font-size: 19px; line-height:1.65;
     }
-    .wrap{max-width:1000px; margin:0 auto; padding:24px 16px 40px;}
+    .wrap{max-width:1100px; margin:0 auto; padding:24px 16px 40px;}
     header{margin-bottom:18px}
     h1{font-size:28px; margin:0 0 6px}
     .sub{color:var(--muted); margin:0}
@@ -85,6 +87,41 @@
     th{background:rgba(2,6,23,.45); text-align:right; font-weight:700}
     tr:last-child td{border-bottom:none}
     .small{font-size:16px; color:var(--muted)}
+
+    /* تمييز اللام الشمسية/القمرية */
+    .baytBox{
+      background:rgba(2,6,23,.35);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      line-height:2.0;
+      font-size:20px;
+      word-break:break-word;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:3px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.35);
+      color:var(--muted);
+      font-size:15px;
+    }
+    .sun{
+      border-bottom: 2px solid var(--sun);
+      background: rgba(251,191,36,.12);
+      border-radius:10px;
+      padding:2px 6px;
+    }
+    .moon{
+      border-bottom: 2px solid var(--moon);
+      background: rgba(96,165,250,.12);
+      border-radius:10px;
+      padding:2px 6px;
+    }
+
     @media (max-width:720px){
       .kpi{grid-template-columns:1fr}
       h1{font-size:24px}
@@ -95,24 +132,58 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>كاشف البحر الشعري (تجريبي)</h1>
+      <h1>كاشف البحر الشعري + تمييز (الـ) القمرية/الشمسية</h1>
       <p class="sub">أدخلي البيت (ويُفضّل مُشكَّلًا)، ويمكن الفصل بين الشطرين بعلامة <span class="mono">|</span> أو سطر جديد.</p>
     </header>
 
     <div class="grid">
       <section class="card">
         <label for="bayt">البيت</label>
-        <textarea id="bayt" placeholder="مثال: أَلا لَيْتَ الشَّبابَ يَعُودُ يَوْمًا | فَأُخْبِرَهُ بِما فَعَلَ المَشِيبُ"></textarea>
+        <textarea id="bayt" placeholder="مثال: الشَّمْسُ طَالِعَةٌ | وَالقَمَرُ مُنِيرٌ"></textarea>
 
         <div class="row" style="margin-top:10px">
           <button class="btn primary" id="analyze">حلّل وحدّد البحر</button>
           <button class="btn" id="demo">جرّب مثالًا</button>
           <button class="btn" id="clear">مسح</button>
           <span class="pill">/** = متحرّك، 0 = ساكن</span>
+          <span class="pill">تنبيه: بلا تشكيل = ساكن (0)</span>
         </div>
 
         <p class="hint">
-          ملاحظة: إن كان البيت بلا تشكيل، فالنتيجة تصبح “تخمينًا” لأن الحركات غير ظاهرة.
+          ملاحظة: الآن أي حرف بلا تشكيل يُحسب ساكنًا (0) كما طلبتِ؛ هذا قد يجعل الوزن أكثر “انكماشًا” إن كان النص غير مُشكَّل.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 10px; font-size:22px">تمييز (الـ) القمرية/الشمسية</h2>
+        <div class="row" style="margin-bottom:10px">
+          <span class="tag"><span class="moon">قمرية</span> لام ظاهرة (لْ)</span>
+          <span class="tag"><span class="sun">شمسية</span> لام مدغمة (والحرف التالي مشدد)</span>
+          <span class="tag">حركة ألف الوصل عند الابتداء: (اَ)</span>
+        </div>
+
+        <div id="baytMarked" class="baytBox">—</div>
+
+        <div style="margin-top:12px; overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الكلمة</th>
+                <th>النوع</th>
+                <th>حركة ألف الوصل</th>
+                <th>حالة اللام</th>
+                <th>الكتابة العروضية (مقترحة)</th>
+              </tr>
+            </thead>
+            <tbody id="alRows">
+              <tr><td colspan="6" class="small">أدخلي نصًا ثم اضغطي: حلّل وحدّد البحر</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="hint small">
+          “الكتابة العروضية” هنا تعني: إظهار ما يُنطق وما يُدغم؛ في الشمسية تُحذف اللام نطقًا ويُشدَّد الحرف الشمسي (نمثل الشدّة بتكرار الحرف).
         </p>
       </section>
 
@@ -132,7 +203,7 @@
           </div>
         </div>
         <p class="hint small">
-          التقطيع هنا يحاول مراعاة: السكون، الشدّة (تفكيكها إلى ساكن + متحرّك)، التنوين (حركة + نون ساكنة)، وحروف المدّ بعد حركة مناسبة.
+          التقطيع يحاول مراعاة: السكون، الشدّة (تفكيكها إلى ساكن + متحرّك)، التنوين (حركة + نون ساكنة)، وحروف المدّ بعد حركة مناسبة.
         </p>
       </section>
 
@@ -156,17 +227,13 @@
             </tbody>
           </table>
         </div>
-
-        <p class="hint small">
-          البحور المدعومة هنا (الأشهر): الطويل، البسيط، الكامل، الوافر، الرمل، الرجز، الخفيف، الهزج، المتقارب، المتدارك، المديد. (والمفاتيح العامة مذكورة في مراجع شائعة). :contentReference[oaicite:1]{index=1}
-        </p>
       </section>
     </div>
   </div>
 
 <script>
 (() => {
-  // ====== أدوات عامة ======
+  // ====== ثوابت عربية ======
   const AR_LETTER = /[\u0621-\u064A\u0671-\u06D3\u06FA-\u06FF]/;
   const HARAKAT = /[\u064B-\u0652\u0670]/g; // تنوين/حركات/سكون + ألف خنجرية
   const SHADDA = "\u0651";
@@ -178,6 +245,9 @@
   const TANWIN_D = "\u064C"; // ٌ
   const TANWIN_K = "\u064D"; // ٍ
   const DAGGER_A = "\u0670"; // ٰ
+
+  const SUN_LETTERS = new Set(["ت","ث","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ل","ن"]); // الحروف الشمسية
+  const VOWELS_SET = new Set([FATHA, DAMMA, KASRA, TANWIN_F, TANWIN_D, TANWIN_K, DAGGER_A, SUKUN, SHADDA]);
 
   const el = (id) => document.getElementById(id);
   const setText = (id, txt, cls) => { const n = el(id); n.className = cls || "mono"; n.textContent = txt; };
@@ -193,7 +263,6 @@
   }
 
   function splitShatrain(s){
-    // فصل الشطرين بعلامة | أو سطر جديد
     if (s.includes("|")) {
       const parts = s.split("|").map(x=>x.trim()).filter(Boolean);
       return [parts[0] || "", parts[1] || ""];
@@ -202,13 +271,114 @@
       const parts = s.split("\n").map(x=>x.trim()).filter(Boolean);
       return [parts[0] || "", parts[1] || ""];
     }
-    // إن لم يوجد فصل، نُرجع شطرًا واحدًا
     return [s.trim(), ""];
   }
 
-  // ====== تحويل النص إلى سلسلة /0 ======
+  // ====== تمييز (الـ) القمرية/الشمسية ======
+  function isHarakaChar(ch){
+    return VOWELS_SET.has(ch);
+  }
+
+  function skipHarakat(str, idx){
+    let i = idx;
+    while (i < str.length && isHarakaChar(str[i])) i++;
+    return i;
+  }
+
+  function getNextArabicLetter(str, idx){
+    // يرجع أول حرف عربي بعد idx مع تجاوز الحركات
+    let i = idx;
+    while (i < str.length){
+      if (isHarakaChar(str[i])) { i++; continue; }
+      if (AR_LETTER.test(str[i])) return {ch:str[i], index:i};
+      i++;
+    }
+    return null;
+  }
+
+  function analyzeALInText(text){
+    // نحافظ على النص كما هو للتلوين، ونحلله كلمة-كلمة
+    const original = (text || "").trim();
+    if (!original) return {marked:"—", items:[]};
+
+    // تقسيم كلمات مع الحفاظ على الفواصل البسيطة عبر split ثم إعادة بناء
+    const tokens = original.split(/(\s+)/); // يضمن بقاء المسافات
+    const items = [];
+    let marked = "";
+
+    for (let t of tokens){
+      if (/^\s+$/.test(t)) { marked += t; continue; }
+
+      // نظّف طرفي الكلمة من الرموز الشائعة لكن اترك داخلها
+      const rawWord = t;
+      const stripped = rawWord.replace(/^[\u200f\u200e"'“”‘’\(\)\[\]\{\}\.,;:!?؟]+|[\u200f\u200e"'“”‘’\(\)\[\]\{\}\.,;:!?؟]+$/g, "");
+
+      // موقع stripped داخل rawWord
+      const pre = rawWord.slice(0, rawWord.indexOf(stripped));
+      const post = rawWord.slice(rawWord.indexOf(stripped) + stripped.length);
+
+      // تحقّق: تبدأ بـ "ال" أو "ٱل"
+      const w = stripped;
+      const starts =
+        (w.startsWith("ال") ? 2 :
+         (w.startsWith("ٱل") ? 2 : 0));
+      if (!starts){
+        marked += rawWord;
+        continue;
+      }
+
+      // بعد الألف واللام، تجاوز حركات على اللام إن وُجدت
+      const lamIdx = 1; // في "ال" اللام عند 1
+      const afterLam = skipHarakat(w, lamIdx+1);
+      const nxt = getNextArabicLetter(w, afterLam);
+
+      if (!nxt){
+        marked += rawWord;
+        continue;
+      }
+
+      const sun = SUN_LETTERS.has(nxt.ch);
+      const kind = sun ? "شمسية" : "قمرية";
+      const kindCls = sun ? "sun" : "moon";
+
+      // استخراج بقية الكلمة بعد اللام (بما فيها الحرف التالي وما بعده)
+      const restAfterLam = w.slice(afterLam);
+
+      // كتابة عروضية مقترحة
+      // ألف الوصل عند الابتداء: (اَ)
+      // القمرية: اَلْ + بقية الكلمة (اللام منطوقة ساكنة)
+      // الشمسية: اَ + (الحرف الشمسي مكرر) + بقية الكلمة بدون اللام
+      let arudi = "";
+      if (!sun){
+        arudi = "اَلْ" + restAfterLam;
+      } else {
+        // كرّر الحرف الشمسي للدلالة على الشدّة (مع الإبقاء على بقية الكلمة)
+        // مثال: الشَّمْس → اَشْشَّمْس (تقريبًا)
+        // سنكرر حرف nxt.ch ثم نلحق بقية restAfterLam كما هي
+        arudi = "اَ" + nxt.ch + restAfterLam;     // النسخة الأولى
+        arudi = "اَ" + nxt.ch + restAfterLam;     // ثم نضيف تكرارًا في العرض
+        // لجعل التكرار واضحًا: نضعه حرفيًا مرتين قبل restAfterLam بدون أول حرف
+        arudi = "اَ" + nxt.ch + nxt.ch + restAfterLam.slice(nxt.index - afterLam + 1);
+      }
+
+      const item = {
+        word: stripped,
+        kind,
+        hamzaWasl: "اَ (عند الابتداء)",
+        lamState: sun ? "لام ساكنة مدغمة (لا تُنطق)" : "لام ساكنة ظاهرة (تُنطق)",
+        arudi
+      };
+      items.push(item);
+
+      // تلوين الكلمة كاملة (للوضوح)، ويمكنك لاحقًا تلوين "ال" فقط إن رغبتِ
+      marked += pre + `<span class="${kindCls}" title="${kind}">${stripped}</span>` + post;
+    }
+
+    return {marked, items};
+  }
+
+  // ====== تحويل النص إلى سلسلة /0 (مع تعديل: بلا تشكيل = ساكن) ======
   function tokenizeLettersWithMarks(text){
-    // كل حرف عربي مع ما بعده من حركات (Combining marks)
     const out = [];
     const s = text;
     for (let i=0; i<s.length; i++){
@@ -221,7 +391,6 @@
         marks += s[j];
         j++;
       }
-      // أعد ضبط HARAKAT regex state
       HARAKAT.lastIndex = 0;
       out.push({ch, marks});
       i = j-1;
@@ -249,7 +418,6 @@
   function extractPattern(text){
     const raw = normalizeArabic(text);
 
-    // قياس مستوى التشكيل (تقريبي)
     const marksCount = (raw.match(HARAKAT) || []).length;
     HARAKAT.lastIndex = 0;
     const lettersCount = (raw.match(/[\u0621-\u064A\u0671-\u06D3\u06FA-\u06FF]/g) || []).length;
@@ -257,29 +425,27 @@
 
     const tokens = tokenizeLettersWithMarks(raw);
     let pat = "";
-    let unvowelled = 0;
 
     for (let i=0; i<tokens.length; i++){
       const t = tokens[i];
       const m = t.marks || "";
 
-      // شدّة: تُفكّ إلى ساكن ثم المتحرك/الساكن بحسب الحركة
+      // شدّة: ساكن ثم التالي بحسب حركة الحرف
       if (m.includes(SHADDA)) pat += "0";
 
-      // حركة/سكون للحرف الحالي
       if (m.includes(SUKUN)) {
         pat += "0";
       } else if (hasAnyVowel(m)) {
         pat += "/";
-        // تنوين: نون ساكنة بعد الحركة
+        // تنوين: حركة + نون ساكنة
         if (m.includes(TANWIN_F) || m.includes(TANWIN_D) || m.includes(TANWIN_K)) pat += "0";
       } else {
-        // بلا تشكيل: تخمين (نعدّه متحركًا غالبًا)
-        pat += "/";
-        unvowelled++;
+        // === التعديل المطلوب ===
+        // بلا تشكيل = ساكن
+        pat += "0";
       }
 
-      // معالجة حروف المدّ: إن جاء بعد حركة مناسبة وكان غير مُشكَّل، نعدّه ساكنًا ونستهلكه
+      // حروف المد بعد حركة مناسبة (إن وُجدت الحركة على الحرف السابق)
       const vt = vowelType(m);
       if (vt && i+1 < tokens.length) {
         const n = tokens[i+1];
@@ -291,35 +457,30 @@
             (vt === "i" && n.ch === "ي");
           if (ok){
             pat += "0";
-            i++; // استهلاك حرف المد
+            i++;
           }
         }
       }
     }
 
-    // تنعيم بسيط: إزالة فراغات نمطية غير موجودة أصلا
     pat = pat.replace(/[^\/0]/g,"");
-
-    return {pattern: pat, vowelRatio, unvowelled, lettersCount, marksCount, raw};
+    return {pattern: pat, vowelRatio, lettersCount, marksCount, raw};
   }
 
   // ====== تفعيلات ورموزها (/0) ======
-  // (اعتمدنا أشهر الرموز المتداولة: فعولن //0/0، مفاعيلن //0/0/0، مفاعلتن //0///0، متفاعلن ///0//0، فاعلاتن /0//0/0، فاعلن /0//0، مستفعلن /0/0//0) :contentReference[oaicite:2]{index=2}
   const FEET = [
-    { base:"فعولن", variants:["//0/0","//0//"] },                 // فعولُ (حذف ساكن)
-    { base:"مفاعيلن", variants:["//0/0/0","//0//0","//0/0"] },   // مفاعلن/مفاعيل (تقريبي)
-    { base:"مفاعلتن", variants:["//0///0","//0//0"] },           // تقريبي لبعض الزحاف
-    { base:"متفاعلن", variants:["///0//0","//0//0"] },           // متفاعلن/مُتْفاعلن (تقريبي)
-    { base:"فاعلاتن", variants:["/0//0/0","///0/0"] },           // فعلاتن (تقريبي)
-    { base:"فاعلن", variants:["/0//0","///0","/0/0"] },          // فَعِلن/فعْلن (تقريبي)
-    { base:"مستفعلن", variants:["/0/0//0","//0//0","/0//0"] },   // مُتَفْعِلُن (خبن) تقريبي
+    { base:"فعولن", variants:["//0/0","//0//"] },
+    { base:"مفاعيلن", variants:["//0/0/0","//0//0","//0/0"] },
+    { base:"مفاعلتن", variants:["//0///0","//0//0"] },
+    { base:"متفاعلن", variants:["///0//0","//0//0"] },
+    { base:"فاعلاتن", variants:["/0//0/0","///0/0"] },
+    { base:"فاعلن", variants:["/0//0","///0","/0/0"] },
+    { base:"مستفعلن", variants:["/0/0//0","//0//0","/0//0"] },
   ];
 
-  // ====== قوالب البحور (تفعيلات كل شطر) ======
-  // مفاتيح البحور/تفعيلاتها العامة متداولة ومذكورة في مصادر عامة. :contentReference[oaicite:3]{index=3}
   const METERS = [
     { name:"الطويل",  tmpl:["فعولن","مفاعيلن","فعولن","مفاعيلن"], note:"قد يأتي في العروض/الضرب: مفاعلن (تقريبًا)" },
-    { name:"البسيط",  tmpl:["مستفعلن","فاعلن","مستفعلن","فاعلن"], note:"شائع فيه خبن/قطع في فاعلن (فعِلن/فعْلن)" },
+    { name:"البسيط",  tmpl:["مستفعلن","فاعلن","مستفعلن","فاعلن"], note:"شائع فيه خبن/قطع في فاعلن" },
     { name:"الكامل",  tmpl:["متفاعلن","متفاعلن","متفاعلن"], note:"" },
     { name:"الوافر",  tmpl:["مفاعلتن","مفاعلتن","فعولن"], note:"" },
     { name:"الرمل",   tmpl:["فاعلاتن","فاعلاتن","فاعلاتن"], note:"" },
@@ -332,7 +493,6 @@
   ];
 
   function segmentToFeet(pattern){
-    // برمجة ديناميكية: أفضل تغطية للنمط بتفعيلات
     const n = pattern.length;
     const dp = Array(n+1).fill(null);
     dp[0] = {cost:0, seq:[]};
@@ -344,7 +504,7 @@
         for (const v of f.variants){
           if (pattern.startsWith(v, i)){
             const j = i + v.length;
-            const nextCost = dp[i].cost; // تطابق تام بلا كلفة إضافية
+            const nextCost = dp[i].cost;
             const nextSeq = dp[i].seq.concat([{base:f.base, var:v}]);
             if (!dp[j] || nextCost < dp[j].cost){
               dp[j] = {cost:nextCost, seq:nextSeq};
@@ -353,7 +513,7 @@
         }
       }
 
-      // السماح بتجاوز رمز واحد كعقوبة بسيطة (لمقاومة أخطاء التشكيل)
+      // سماح بتجاوز رمز واحد (أخطاء تشكيل)
       const skipCost = dp[i].cost + 1;
       const j = i + 1;
       if (!dp[j] || skipCost < dp[j].cost){
@@ -361,11 +521,10 @@
       }
     }
 
-    // اختر النهاية الأقل كلفة (قد لا تصل لنهاية كاملة)
     let best = null;
     for (let k=0; k<=n; k++){
       if (!dp[k]) continue;
-      const tailPenalty = (n-k); // ما تبقى
+      const tailPenalty = (n-k);
       const total = dp[k].cost + tailPenalty;
       if (!best || total < best.total){
         best = {end:k, total, seq:dp[k].seq, leftover: pattern.slice(k)};
@@ -375,7 +534,6 @@
   }
 
   function editDistance(a, b){
-    // a,b arrays (تفعيلات)
     const m = a.length, n = b.length;
     const d = Array.from({length:m+1}, ()=>Array(n+1).fill(0));
     for (let i=0;i<=m;i++) d[i][0]=i;
@@ -383,11 +541,7 @@
     for (let i=1;i<=m;i++){
       for (let j=1;j<=n;j++){
         const cost = (a[i-1]===b[j-1]) ? 0 : 1;
-        d[i][j] = Math.min(
-          d[i-1][j] + 1,
-          d[i][j-1] + 1,
-          d[i-1][j-1] + cost
-        );
+        d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost);
       }
     }
     return d[m][n];
@@ -396,9 +550,8 @@
   function scoreMeter(predFeet, meterTmpl, penalty){
     const dist = editDistance(predFeet, meterTmpl);
     const base = Math.max(predFeet.length, meterTmpl.length, 1);
-    // دمج عقوبة عدم تغطية النمط (penalty)
-    const dist2 = dist + Math.min(6, penalty); // سقف عقوبة
-    const conf = Math.max(0, 1 - (dist2 / (base + 2))); // +2 لتخفيف القسوة
+    const dist2 = dist + Math.min(6, penalty);
+    const conf = Math.max(0, 1 - (dist2 / (base + 2)));
     return {dist: dist2, conf};
   }
 
@@ -406,33 +559,24 @@
     const info = extractPattern(text);
     const seg = segmentToFeet(info.pattern);
     const predFeet = seg.seq.filter(x=>x.base!=="(تجاوز)").map(x=>x.base);
-
-    // قياس عقوبة التقطيع (كلما زادت دلّت على ضعف التشكيل/الملاءمة)
     const penalty = seg.total;
 
     const candidates = METERS.map(m=>{
       const sc = scoreMeter(predFeet, m.tmpl, penalty);
-      return {
-        name:m.name,
-        tmpl:m.tmpl.join(" "),
-        conf: sc.conf,
-        dist: sc.dist,
-        note:m.note,
-      };
+      return { name:m.name, tmpl:m.tmpl.join(" "), conf: sc.conf, dist: sc.dist, note:m.note };
     }).sort((x,y)=>y.conf - x.conf);
 
     return {info, seg, predFeet, candidates};
   }
 
   function fmtPct(x){ return Math.round(x*100) + "%"; }
-
   function confidenceClass(c){
     if (c >= 0.80) return "good";
     if (c >= 0.55) return "warn";
     return "bad";
   }
 
-  function renderResults(a1, a2){
+  function renderMeterResults(a1, a2){
     const top = [];
     for (let i=0;i<Math.min(3, a1.candidates.length); i++){
       const c1 = a1.candidates[i];
@@ -440,7 +584,6 @@
       let details = `الشطر 1: ${a1.predFeet.join(" ")}${a1.seg.leftover ? " | بقايا: "+a1.seg.leftover : ""}`;
 
       if (a2 && a2.info && a2.info.raw.trim()){
-        // مزج الشطرين: نأخذ بحرًا واحدًا ونحسب متوسط تطابقه
         const c2 = a2.candidates.find(x=>x.name===c1.name) || a2.candidates[0];
         conf = (c1.conf + (c2 ? c2.conf : 0)) / 2;
         details += `<br>الشطر 2: ${a2.predFeet.join(" ")}${a2.seg.leftover ? " | بقايا: "+a2.seg.leftover : ""}`;
@@ -453,7 +596,7 @@
     rows.innerHTML = "";
 
     if (!top.length){
-      rows.innerHTML = `<tr><td colspan="5" class="small">لم نستطع استخراج نتيجة. جرّبي بيتًا مُشكَّلًا أو افصلي الشطرين بعلامة |</td></tr>`;
+      rows.innerHTML = `<tr><td colspan="5" class="small">لم نستطع استخراج نتيجة.</td></tr>`;
       return;
     }
 
@@ -478,7 +621,32 @@
   function setStateBadge(vowelRatio){
     if (vowelRatio >= 0.35) return {txt:"مُشكَّل بدرجة جيدة", cls:"mono good"};
     if (vowelRatio >= 0.15) return {txt:"تشكيل قليل (النتيجة قد تتذبذب)", cls:"mono warn"};
-    return {txt:"بلا تشكيل تقريبًا (النتيجة تخمين)", cls:"mono bad"};
+    return {txt:"بلا تشكيل تقريبًا (ومع قاعدة السكون قد يضعف الوزن)", cls:"mono bad"};
+  }
+
+  function renderALSection(text){
+    const res = analyzeALInText(text);
+    el("baytMarked").innerHTML = res.marked || "—";
+
+    const body = el("alRows");
+    body.innerHTML = "";
+    if (!res.items.length){
+      body.innerHTML = `<tr><td colspan="6" class="small">لا توجد كلمات تبدأ بـ (الـ) في النص المعطى.</td></tr>`;
+      return;
+    }
+    res.items.forEach((it, idx)=>{
+      const tr = document.createElement("tr");
+      const cls = (it.kind === "شمسية") ? "sun" : "moon";
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td><strong>${it.word}</strong></td>
+        <td><span class="${cls}">${it.kind}</span></td>
+        <td>${it.hamzaWasl}</td>
+        <td>${it.lamState}</td>
+        <td class="mono">${it.arudi}</td>
+      `;
+      body.appendChild(tr);
+    });
   }
 
   // ====== أزرار ======
@@ -486,6 +654,10 @@
     const input = el("bayt").value || "";
     const [s1, s2] = splitShatrain(input);
 
+    // 1) تمييز (الـ)
+    renderALSection(input);
+
+    // 2) تحليل البحر
     const a1 = analyzeOneShatr(s1);
     const a2 = s2.trim() ? analyzeOneShatr(s2) : null;
 
@@ -495,11 +667,11 @@
     setText("pat1", a1.info.pattern || "—", "mono");
     setText("pat2", a2 ? (a2.info.pattern || "—") : "—", "mono");
 
-    renderResults(a1, a2);
+    renderMeterResults(a1, a2);
   });
 
   el("demo").addEventListener("click", ()=>{
-    el("bayt").value = "وَسَائِلِ القَوْمَ مَا مَجْدِي وَمَا خُلُقِي | وَهَلْ يَرُوقُ دَفِينًا جَوْدَةُ الكَفَنِ";
+    el("bayt").value = "الشَّمْسُ تُنِيرُ الدُّنْيَا | وَالقَمَرُ فِي اللَّيْلِ سَنَا";
   });
 
   el("clear").addEventListener("click", ()=>{
@@ -509,6 +681,8 @@
     setText("pat2","—");
     el("resultLead").textContent = "—";
     el("rows").innerHTML = `<tr><td colspan="5" class="small">أدخلي بيتًا ثم اضغطي: حلّل وحدّد البحر</td></tr>`;
+    el("baytMarked").textContent = "—";
+    el("alRows").innerHTML = `<tr><td colspan="6" class="small">أدخلي نصًا ثم اضغطي: حلّل وحدّد البحر</td></tr>`;
   });
 
 })();
