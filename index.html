@@ -3,14 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>كاشف البحر الشعري + تمييز (ال) القمرية/الشمسية</title>
+  <title>كاشف البحر الشعري + تمييز (ال) القمرية/الشمسية + الشدة</title>
   <style>
     :root{
-      --bg:#0b0f14;
       --card:#121826;
       --muted:#9aa4b2;
       --text:#e5e7eb;
-      --accent:#7dd3fc;
       --good:#86efac;
       --warn:#fbbf24;
       --bad:#fb7185;
@@ -21,7 +19,8 @@
     *{box-sizing:border-box}
     body{
       margin:0; background:linear-gradient(180deg,#070a10, #0b0f14 40%, #070a10);
-      color:var(--text); font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      color:var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
       font-size: 19px; line-height:1.65;
     }
     .wrap{max-width:1100px; margin:0 auto; padding:24px 16px 40px;}
@@ -131,7 +130,7 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>كاشف البحر الشعري + تمييز (الـ) القمرية/الشمسية</h1>
+      <h1>كاشف البحر الشعري + تمييز (الـ) + الشدة</h1>
       <p class="sub">أدخلي البيت (ويُفضّل مُشكَّلًا)، ويمكن الفصل بين الشطرين بعلامة <span class="mono">|</span> أو سطر جديد.</p>
     </header>
 
@@ -149,7 +148,7 @@
         </div>
 
         <p class="hint">
-          ملاحظة: أي حرف بلا تشكيل يُحسب ساكنًا (0) كما طلبتِ؛ هذا قد يضعف دقّة الوزن إن كان النص غير مُشكَّل.
+          الشدة تُحوَّل في “الكتابة العروضية” إلى تكرار الحرف. وفي (الـ) الشمسية لن يحدث تكرار زائد حتى لو كانت الشدة مكتوبة.
         </p>
       </section>
 
@@ -157,7 +156,7 @@
         <h2 style="margin:0 0 10px; font-size:22px">تمييز (الـ) القمرية/الشمسية</h2>
         <div class="row" style="margin-bottom:10px">
           <span class="tag"><span class="moon">قمرية</span> لام ظاهرة (لْ)</span>
-          <span class="tag"><span class="sun">شمسية</span> لام مدغمة (والحرف التالي مشدد)</span>
+          <span class="tag"><span class="sun">شمسية</span> لام مدغمة (الحرف التالي مُشدَّد)</span>
           <span class="tag">ألف الوصل لا تُنطق وصلاً</span>
         </div>
 
@@ -182,8 +181,7 @@
         </div>
 
         <p class="hint small">
-          في الشمسية: تُدغم اللام ويُشدَّد الحرف الشمسي (نُمثّل الشدّة بتكرار الحرف). في القمرية: اللام تُنطق ساكنة.
-          وألف الوصل: تُنطق ابتداءً فقط، وتسقط وصلاً.
+          القمرية: تُنطق اللام ساكنة. الشمسية: تُدغم اللام ويُشدَّد الحرف الشمسي (نُمثّل الشدة بتكرار الحرف).
         </p>
       </section>
 
@@ -271,7 +269,7 @@
     return [s.trim(), ""];
   }
 
-  // ====== أدوات لمعرفة ابتداء/وصل قبل "ال" ======
+  // ====== ابتداء/وصل قبل "ال" ======
   function lastNonSpaceChar(str){
     for (let i=str.length-1; i>=0; i--){
       const c = str[i];
@@ -283,15 +281,15 @@
     return (!prevChar || /[|،,؛;.!?؟…:\n]/.test(prevChar));
   }
 
-  // ====== تمييز (الـ) القمرية/الشمسية ======
-  function isHarakaChar(ch){
-    return VOWELS_SET.has(ch);
-  }
+  // ====== أدوات حركات ======
+  function isHarakaChar(ch){ return VOWELS_SET.has(ch); }
+
   function skipHarakat(str, idx){
     let i = idx;
     while (i < str.length && isHarakaChar(str[i])) i++;
     return i;
   }
+
   function getNextArabicLetter(str, idx){
     let i = idx;
     while (i < str.length){
@@ -302,6 +300,48 @@
     return null;
   }
 
+  // ====== تفكيك أول حرف + حركاته داخل مقطع ======
+  function splitFirstLetterAndMarks(s){
+    let i = 0;
+    // تجاوز أي شيء غير حرف (نادر داخل الكلمات لكن احتياطاً)
+    while (i < s.length && !AR_LETTER.test(s[i])) i++;
+    if (i >= s.length) return null;
+
+    const ch = s[i];
+    let j = i+1;
+    let marks = "";
+    while (j < s.length && isHarakaChar(s[j])) { marks += s[j]; j++; }
+    const rest = s.slice(j);
+    return {ch, marks, rest};
+  }
+
+  // ====== كتابة عروضية: توسيع الشدة بتكرار الحرف + إزالة الحركات ======
+  function expandShaddaLettersOnly(s){
+    // يُرجع نصاً بحروف فقط، ويكرر الحرف إن كانت عليه شدة.
+    let out = "";
+    for (let i=0; i<s.length; i++){
+      const ch = s[i];
+
+      if (!AR_LETTER.test(ch)) {
+        // نتجاهل كل غير الحروف في العروضية
+        continue;
+      }
+
+      // اجمع الحركات بعد الحرف
+      let marks = "";
+      let j = i+1;
+      while (j < s.length && isHarakaChar(s[j])) { marks += s[j]; j++; }
+
+      // لو على الحرف شدة: نكرر الحرف مرة (بدون حركات)
+      if (marks.includes(SHADDA)) out += ch + ch;
+      else out += ch;
+
+      i = j-1;
+    }
+    return out;
+  }
+
+  // ====== تمييز (الـ) القمرية/الشمسية + كتابة عروضية بدون تعارض مع الشدة ======
   function analyzeALInText(text){
     const original = (text || "").trim();
     if (!original) return {marked:"—", items:[]};
@@ -319,9 +359,7 @@
       const post = rawWord.slice(rawWord.indexOf(stripped) + stripped.length);
 
       const w = stripped;
-      const starts =
-        (w.startsWith("ال") ? 2 :
-         (w.startsWith("ٱل") ? 2 : 0));
+      const starts = (w.startsWith("ال") ? 2 : (w.startsWith("ٱل") ? 2 : 0));
       if (!starts){
         marked += rawWord;
         continue;
@@ -338,33 +376,48 @@
       const sun = SUN_LETTERS.has(nxt.ch);
       const kind = sun ? "شمسية" : "قمرية";
       const kindCls = sun ? "sun" : "moon";
-      const restAfterLam = w.slice(afterLam);
 
-      // === تحديد ابتداء/وصل ===
+      // تحديد ابتداء/وصل: اعتماداً على ما قبلها في النص (مع تجاهل وسوم HTML)
       const plainSoFar = marked.replace(/<[^>]+>/g, "");
       const prevChar = lastNonSpaceChar(plainSoFar);
       const ibtida = isIbtidaByPrevChar(prevChar);
 
       const hamzaWasl = ibtida ? "تُنطق (اَ) ابتداءً" : "لا تُنطق وصلاً";
-      let arudi = "";
 
+      // مقطع ما بعد اللام (أي بداية اسم المعرفة)
+      const stemRaw = w.slice(afterLam);
+
+      let arudi = "";
       if (!sun){
-        // قمرية: ابتداءً اَلْ... / وصلاً لْ...
-        arudi = (ibtida ? "اَلْ" : "لْ") + restAfterLam;
+        // قمرية:
+        // ابتداءً: اَلْ + (تفكيك الشدة في بقية الكلمة)
+        // وصلاً:  لْ + (...)
+        const expanded = expandShaddaLettersOnly(stemRaw);
+        arudi = (ibtida ? "اَلْ" : "لْ") + expanded;
       } else {
-        // شمسية: ابتداءً اَ + حرف مكرر / وصلاً حرف مكرر فقط
-        const restWithoutFirstSun = restAfterLam.slice(nxt.index - afterLam + 1);
-        arudi = (ibtida ? "اَ" : "") + nxt.ch + nxt.ch + restWithoutFirstSun;
+        // شمسية:
+        // اللام لا تُنطق، والحرف الشمسي يجب أن يكون مُشدّدًا.
+        // حتى لا نتعارض مع الشدة المكتوبة (الشَّمس)، نضيف الشدة فقط إن لم تكن موجودة على أول حرف.
+        const first = splitFirstLetterAndMarks(stemRaw);
+        if (first){
+          let marks = first.marks || "";
+          if (!marks.includes(SHADDA)) marks += SHADDA; // إضافة شدة افتراضية فقط إن كانت غير موجودة
+          const stemWithEnsuredShadda = first.ch + marks + first.rest;
+
+          const expanded = expandShaddaLettersOnly(stemWithEnsuredShadda);
+          arudi = (ibtida ? "اَ" : "") + expanded;
+        } else {
+          arudi = (ibtida ? "اَ" : "") + expandShaddaLettersOnly(stemRaw);
+        }
       }
 
-      const item = {
+      items.push({
         word: stripped,
         kind,
         hamzaWasl,
         lamState: sun ? "لام مدغمة (لا تُنطق) ويُشدَّد الحرف التالي" : "لام ظاهرة ساكنة (تُنطق)",
         arudi
-      };
-      items.push(item);
+      });
 
       marked += pre + `<span class="${kindCls}" title="${kind}">${stripped}</span>` + post;
     }
@@ -382,16 +435,14 @@
 
       let marks = "";
       let j = i+1;
-      while (j < s.length && HARAKAT.test(s[j])) {
-        marks += s[j];
-        j++;
-      }
+      while (j < s.length && HARAKAT.test(s[j])) { marks += s[j]; j++; }
       HARAKAT.lastIndex = 0;
       out.push({ch, marks});
       i = j-1;
     }
     return out;
   }
+
   function hasAnyVowel(marks){
     return marks.includes(FATHA) || marks.includes(DAMMA) || marks.includes(KASRA) ||
            marks.includes(TANWIN_F) || marks.includes(TANWIN_D) || marks.includes(TANWIN_K) ||
@@ -421,6 +472,7 @@
       const t = tokens[i];
       const m = t.marks || "";
 
+      // الشدة = ساكن ثم حركة/سكون بحسب الحرف
       if (m.includes(SHADDA)) pat += "0";
 
       if (m.includes(SUKUN)) {
@@ -432,6 +484,7 @@
         pat += "0"; // بلا تشكيل = ساكن
       }
 
+      // حروف المد
       const vt = vowelType(m);
       if (vt && i+1 < tokens.length) {
         const n = tokens[i+1];
