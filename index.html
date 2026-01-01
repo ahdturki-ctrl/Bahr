@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>تحليل عروض: (الـ) القمرية/الشمسية + الشدة + منع التقاء ساكنين</title>
+  <title>تحليل عروض: النمط والبحر + (الـ) + الشدة + منع التقاء ساكنين</title>
   <style>
     :root{
       --card:#121826; --muted:#9aa4b2; --text:#e5e7eb;
@@ -59,13 +59,18 @@
       display:grid; gap:10px;
       grid-template-columns: repeat(3, minmax(0,1fr));
     }
-    .kpi .box{
+    .kpi2{
+      display:grid; gap:10px;
+      grid-template-columns: 1fr 1fr;
+      margin-top:10px;
+    }
+    .kpi .box,.kpi2 .box{
       background:rgba(2,6,23,.35);
       border:1px solid var(--border);
       border-radius:16px;
       padding:12px;
     }
-    .kpi .t{color:var(--muted); font-size:15px; margin-bottom:6px}
+    .kpi .t,.kpi2 .t{color:var(--muted); font-size:15px; margin-bottom:6px}
     .mono{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size:18px;
@@ -103,6 +108,7 @@
     .split2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
     @media (max-width:900px){
       .kpi{grid-template-columns:1fr}
+      .kpi2{grid-template-columns:1fr}
       .split2{grid-template-columns:1fr}
       h1{font-size:24px}
       body, textarea{font-size:18px}
@@ -115,15 +121,26 @@
     .radioGroup label{margin:0; color:var(--text); font-size:16px}
     .chip{display:inline-flex; gap:8px; align-items:center; padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:rgba(2,6,23,.35); color:var(--muted); font-size:15px}
     .err{color:var(--bad); white-space:pre-wrap}
+    .toggleLine{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      padding:10px; border:1px solid var(--border); border-radius:14px;
+      background:rgba(2,6,23,.28);
+      margin-top:10px;
+    }
+    .toggleLine label{margin:0; color:var(--text); font-size:16px}
+    .meterList{
+      margin:0; padding:0 18px 0 0;
+    }
+    .meterList li{margin:6px 0}
+    .score{color:var(--muted); font-size:15px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>تحليل عروض تفصيلي</h1>
+      <h1>تحليل عروض: النمط والبحر</h1>
       <p class="sub">
-        الشمسية وصلاً: حذف الألف واللام فقط. القمرية وصلاً: حذف الألف + إثبات اللام بالسكون.
-        جديد: إذا صار التقاء ساكنين (حرف مد ساكن + لْ) نحذف حرف المد السابق.
+        النتيجة الأساسية (النمط + ترجيح البحر) تظهر هنا. التفاصيل (النص العروضي والجداول) اختيارية.
       </p>
     </header>
 
@@ -147,9 +164,15 @@
           </div>
         </div>
 
+        <div class="toggleLine" title="إظهار/إخفاء التفاصيل (النص العروضي والجداول)">
+          <label><input type="checkbox" id="showDetails"> إظهار التفاصيل (النص العروضي + الجداول)</label>
+          <span class="chip">التفاصيل ليست ضرورية لمعرفة النمط والبحر</span>
+        </div>
+
         <div id="errBox" class="err" style="margin-top:10px; display:none"></div>
       </section>
 
+      <!-- ====== النتيجة الأساسية ====== -->
       <section class="card">
         <div class="kpi">
           <div class="box">
@@ -157,30 +180,31 @@
             <div id="vowelState" class="mono">—</div>
           </div>
           <div class="box">
-            <div class="t">نمط الشطر الأوّل (من النص العروضي)</div>
+            <div class="t">نمط الشطر الأوّل</div>
             <div id="pat1" class="mono">—</div>
           </div>
           <div class="box">
-            <div class="t">نمط الشطر الثاني (من النص العروضي)</div>
+            <div class="t">نمط الشطر الثاني</div>
             <div id="pat2" class="mono">—</div>
           </div>
         </div>
-      </section>
 
-      <section class="card">
-        <h2 class="sectionTitle">النص العروضي المستخدم للتقطيع</h2>
-        <div class="split2">
-          <div>
-            <div class="chip">الشطر الأول (عروضي)</div>
-            <div id="arudi1" class="baytBox mono">—</div>
+        <div class="kpi2">
+          <div class="box">
+            <div class="t">البحر المرجّح (تقريبي)</div>
+            <div id="bestBahr" class="mono">—</div>
+            <div id="bestBahrNote" class="small" style="margin-top:6px">—</div>
           </div>
-          <div>
-            <div class="chip">الشطر الثاني (عروضي)</div>
-            <div id="arudi2" class="baytBox mono">—</div>
+          <div class="box">
+            <div class="t">أقرب بحور (أفضل 5)</div>
+            <ol id="topBahrs" class="meterList small">
+              <li>—</li>
+            </ol>
           </div>
         </div>
+
         <p class="small" style="margin-top:10px">
-          ملاحظة: تعديل منع التقاء ساكنين يظهر هنا مباشرة (حذف حرف المد قبل لْ).
+          ملاحظة: ترجيح البحر يعتمد على مطابقة النمط (/0) مع أوزان “سليمة” للتفعيلات، وقد يختلف مع كثرة الزحافات/العلل أو مع قلة التشكيل.
         </p>
       </section>
 
@@ -194,94 +218,115 @@
         <div id="baytVisual" class="baytBox">—</div>
       </section>
 
-      <section class="card">
-        <h2 class="sectionTitle">تمييز (الـ) القمرية/الشمسية</h2>
-        <div style="overflow:auto; margin-top:10px">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>الكلمة</th>
-                <th>النوع</th>
-                <th>ألف الوصل</th>
-                <th>ملاحظة عروضية</th>
-              </tr>
-            </thead>
-            <tbody id="alRows">
-              <tr><td colspan="5" class="small">اكتبي نصًا ثم اضغطي: حلّل</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2 class="sectionTitle">التقطيع التفصيلي</h2>
-        <div class="split2">
-          <div>
-            <div class="chip">الشطر الأول</div>
-            <div style="margin-top:10px; overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>الأصل</th>
-                    <th>العروضي للتقطيع</th>
-                    <th>نمط /0</th>
-                    <th>ملاحظات</th>
-                  </tr>
-                </thead>
-                <tbody id="w1"><tr><td colspan="5" class="small">—</td></tr></tbody>
-              </table>
+      <!-- ====== التفاصيل (مخفية افتراضيًا) ====== -->
+      <div id="detailsWrap" style="display:none">
+        <section class="card">
+          <h2 class="sectionTitle">النص العروضي المستخدم للتقطيع</h2>
+          <div class="split2">
+            <div>
+              <div class="chip">الشطر الأول (عروضي)</div>
+              <div id="arudi1" class="baytBox mono">—</div>
             </div>
-
-            <div style="margin-top:12px; overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>الموقع</th>
-                    <th>حرف + حركاته</th>
-                    <th>/0</th>
-                    <th>التفسير</th>
-                  </tr>
-                </thead>
-                <tbody id="cs1"><tr><td colspan="4" class="small">—</td></tr></tbody>
-              </table>
+            <div>
+              <div class="chip">الشطر الثاني (عروضي)</div>
+              <div id="arudi2" class="baytBox mono">—</div>
             </div>
           </div>
+          <p class="small" style="margin-top:10px">
+            ملاحظة: هنا يظهر تعديل منع التقاء ساكنين (حذف حرف المد قبل لْ في القمرية وصلاً).
+          </p>
+        </section>
 
-          <div>
-            <div class="chip">الشطر الثاني</div>
-            <div style="margin-top:10px; overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>الأصل</th>
-                    <th>العروضي للتقطيع</th>
-                    <th>نمط /0</th>
-                    <th>ملاحظات</th>
-                  </tr>
-                </thead>
-                <tbody id="w2"><tr><td colspan="5" class="small">—</td></tr></tbody>
-              </table>
+        <section class="card">
+          <h2 class="sectionTitle">تمييز (الـ) القمرية/الشمسية</h2>
+          <div style="overflow:auto; margin-top:10px">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>الكلمة</th>
+                  <th>النوع</th>
+                  <th>ألف الوصل</th>
+                  <th>ملاحظة عروضية</th>
+                </tr>
+              </thead>
+              <tbody id="alRows">
+                <tr><td colspan="5" class="small">اكتبي نصًا ثم اضغطي: حلّل</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="sectionTitle">التقطيع التفصيلي</h2>
+          <div class="split2">
+            <div>
+              <div class="chip">الشطر الأول</div>
+              <div style="margin-top:10px; overflow:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>الأصل</th>
+                      <th>العروضي للتقطيع</th>
+                      <th>نمط /0</th>
+                      <th>ملاحظات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="w1"><tr><td colspan="5" class="small">—</td></tr></tbody>
+                </table>
+              </div>
+
+              <div style="margin-top:12px; overflow:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>الموقع</th>
+                      <th>حرف + حركاته</th>
+                      <th>/0</th>
+                      <th>التفسير</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cs1"><tr><td colspan="4" class="small">—</td></tr></tbody>
+                </table>
+              </div>
             </div>
 
-            <div style="margin-top:12px; overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>الموقع</th>
-                    <th>حرف + حركاته</th>
-                    <th>/0</th>
-                    <th>التفسير</th>
-                  </tr>
-                </thead>
-                <tbody id="cs2"><tr><td colspan="4" class="small">—</td></tr></tbody>
-              </table>
+            <div>
+              <div class="chip">الشطر الثاني</div>
+              <div style="margin-top:10px; overflow:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>الأصل</th>
+                      <th>العروضي للتقطيع</th>
+                      <th>نمط /0</th>
+                      <th>ملاحظات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="w2"><tr><td colspan="5" class="small">—</td></tr></tbody>
+                </table>
+              </div>
+
+              <div style="margin-top:12px; overflow:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>الموقع</th>
+                      <th>حرف + حركاته</th>
+                      <th>/0</th>
+                      <th>التفسير</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cs2"><tr><td colspan="4" class="small">—</td></tr></tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
+
     </div>
   </div>
 
@@ -289,7 +334,7 @@
 (() => {
   // ====== ثوابت ======
   const AR_LETTER = /[\u0621-\u064A\u0671-\u06D3\u06FA-\u06FF]/;
-  const HARAKAT_RE = /[\u064B-\u0652\u0670]/g; // للعدّ فقط
+  const HARAKAT_RE = /[\u064B-\u0652\u0670]/g;
   const SHADDA = "\u0651";
   const SUKUN  = "\u0652";
   const FATHA  = "\u064E";
@@ -349,7 +394,6 @@
 
   function isHarakaChar(ch){ return VOWELS_SET.has(ch); }
 
-  // التقاط حرف + كل العلامات التابعة له
   function tokenizeLettersWithMarks(text){
     const out = [];
     const s = text;
@@ -383,7 +427,7 @@
     return ch === "ا" || ch === "و" || ch === "ي" || ch === "ى";
   }
 
-  // ====== جديد: منع التقاء ساكنين (حذف حرف المد قبل "لْ") ======
+  // ====== منع التقاء ساكنين: حذف حرف المد قبل "لْ" ======
   function dropMaddBeforeLamSukun(prevArudi, nextArudi){
     if (!prevArudi || !nextArudi) return prevArudi;
 
@@ -403,7 +447,6 @@
       !lastMarks.includes(SUKUN) &&
       !lastMarks.includes(SHADDA);
 
-    // للتقليل من حذف غير صحيح: لازم قبل المد حركة (مدّ حقيقي)
     const beforeMarks = before.marks || "";
     const hasVowelBefore = hasAnyVowel(beforeMarks);
 
@@ -487,7 +530,7 @@
     if (!next) return {orig:w, arudi:w, note:"—"};
     const isSun = SUN_LETTERS.has(next.ch);
 
-    // همزة الوصل: حذف الألف وصلاً إن وجدت + ابتداءً نضع فتحة للألف إن كانت بلا حركة
+    // همزة الوصل
     if (alifIndex >= 0){
       if (!ibtida){
         tk.splice(alifIndex, 1);
@@ -555,7 +598,7 @@
       arudiWords.push(r.arudi);
     }
 
-    // ====== جديد: منع التقاء ساكنين (حذف حرف المد قبل لْ) ======
+    // منع التقاء ساكنين بين الكلمات
     for (let i=0; i<arudiWords.length - 1; i++){
       const fixedPrev = dropMaddBeforeLamSukun(arudiWords[i], arudiWords[i+1]);
       if (fixedPrev !== arudiWords[i]){
@@ -599,7 +642,7 @@
         p += "/";
         steps.push({display: t.ch + m, sym:"/", why:"حركة: متحرك (/)"});
 
-        // التنوين: تركناه كما هو الآن (حسب طلبك السابق)
+        // التنوين: تركناه كما هو (حسب طلبك السابق)
         if (m.includes(TANWIN_F) || m.includes(TANWIN_D) || m.includes(TANWIN_K)){
           p += "0";
           steps.push({display: "ـنْ (ضمن التنوين)", sym:"0", why:"تنوين: نون ساكنة"});
@@ -756,6 +799,146 @@
     });
   }
 
+  // ====== مطابقة البحور عبر /0 ======
+  const TAFAEEL = {
+    "فعولن":   "//0/0",
+    "فاعلن":   "/0//0",
+    "مفاعيلن": "//0/0/0",
+    "فاعلاتن": "/0//0/0",
+    "مستفعلن": "/0/0//0",
+    "متفاعلن": "///0//0",
+    "مفاعلتن": "//0///0"
+  };
+
+  const BAHR_DEFS = [
+    {name:"المتقارب", variants:[["فعولن","فعولن","فعولن","فعولن"]]},
+    {name:"المتدارك", variants:[["فاعلن","فاعلن","فاعلن","فاعلن"]]},
+    {name:"الهزج",    variants:[["مفاعيلن","مفاعيلن"]]},
+    {name:"الرجز",    variants:[["مستفعلن","مستفعلن","مستفعلن"]]},
+    {name:"الكامل",   variants:[["متفاعلن","متفاعلن","متفاعلن"]]},
+    {name:"الرمل",    variants:[["فاعلاتن","فاعلاتن","فاعلاتن"]]},
+    {name:"الوافر",   variants:[["مفاعلتن","مفاعلتن","فعولن"]]},
+    {name:"السريع",   variants:[["مستفعلن","مستفعلن","فاعلن"]]},
+    {name:"المديد",   variants:[["فاعلاتن","فاعلن","فاعلاتن"]]},
+    // الطويل له صور متعددة؛ نضع الأشهر سليماً (فعولن مفاعيلن فعولن مفاعيلن) كمرجع أساسي
+    {name:"الطويل",   variants:[["فعولن","مفاعيلن","فعولن","مفاعيلن"]]},
+    // البسيط: الأشهر سليماً (مستفعلن فاعلن مستفعلن فاعلن) كمرجع
+    {name:"البسيط",   variants:[["مستفعلن","فاعلن","مستفعلن","فاعلن"]]}
+  ];
+
+  function buildPatternFromTafaeel(seq){
+    return seq.map(x => TAFAEEL[x] || "").join("");
+  }
+
+  function levenshtein(a,b){
+    const m=a.length, n=b.length;
+    if (!m) return n;
+    if (!n) return m;
+    const dp = new Array(n+1);
+    for (let j=0;j<=n;j++) dp[j]=j;
+    for (let i=1;i<=m;i++){
+      let prev = dp[0];
+      dp[0]=i;
+      for (let j=1;j<=n;j++){
+        const tmp = dp[j];
+        const cost = a[i-1]===b[j-1] ? 0 : 1;
+        dp[j] = Math.min(
+          dp[j]+1,
+          dp[j-1]+1,
+          prev + cost
+        );
+        prev = tmp;
+      }
+    }
+    return dp[n];
+  }
+
+  function scorePattern(inputPat, templatePat){
+    const a = (inputPat||"").replace(/[^\/0]/g,"");
+    const b = (templatePat||"").replace(/[^\/0]/g,"");
+    if (!a || !b) return 0;
+    const dist = levenshtein(a,b);
+    const denom = Math.max(a.length, b.length);
+    return Math.max(0, 1 - (dist/denom));
+  }
+
+  function rankBahrsForShatr(pat){
+    const out = [];
+    for (const b of BAHR_DEFS){
+      let best = 0;
+      let bestVar = null;
+      for (const v of b.variants){
+        const tpat = buildPatternFromTafaeel(v);
+        const sc = scorePattern(pat, tpat);
+        if (sc > best){
+          best = sc; bestVar = v;
+        }
+      }
+      out.push({name:b.name, score:best, tafaeel:(bestVar||[])});
+    }
+    out.sort((x,y)=>y.score-x.score);
+    return out;
+  }
+
+  function combineRankings(r1, r2){
+    // دمج: نعطي أولوية لتقارب الشطرين: نأخذ (أدنى) الدرجتين كدرجة نهائية
+    const map2 = new Map((r2||[]).map(x => [x.name, x]));
+    const out = [];
+    for (const x of (r1||[])){
+      const y = map2.get(x.name);
+      if (!y) continue;
+      out.push({
+        name: x.name,
+        score: Math.min(x.score, y.score),
+        score1: x.score,
+        score2: y.score,
+        tafaeel: (x.tafaeel && x.tafaeel.length ? x.tafaeel : (y.tafaeel||[]))
+      });
+    }
+    out.sort((a,b)=>b.score-a.score);
+    return out;
+  }
+
+  function renderTopBahrs(list){
+    const ol = el("topBahrs");
+    ol.innerHTML = "";
+    const top = (list||[]).slice(0,5);
+    if (!top.length){
+      ol.innerHTML = "<li>—</li>";
+      return;
+    }
+    top.forEach(item=>{
+      const li = document.createElement("li");
+      const pct = Math.round(item.score*100);
+      const taf = (item.tafaeel && item.tafaeel.length) ? (" — " + item.tafaeel.join(" ")) : "";
+      li.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="score">(${pct}%)</span>${escapeHtml(taf)}`;
+      ol.appendChild(li);
+    });
+  }
+
+  function setBestBahr(best, hasTwoShatr){
+    if (!best){
+      setText("bestBahr","—");
+      setText("bestBahrNote","—");
+      return;
+    }
+    const pct = Math.round(best.score*100);
+    const taf = (best.tafaeel && best.tafaeel.length) ? best.tafaeel.join(" ") : "—";
+    setText("bestBahr", `${best.name} (${pct}%)`);
+    if (hasTwoShatr){
+      const p1 = Math.round((best.score1||0)*100);
+      const p2 = Math.round((best.score2||0)*100);
+      setText("bestBahrNote", `تفصيل الدرجات: الشطر الأول ${p1}%، الشطر الثاني ${p2}%. التفعيلات المرجعية: ${taf}`);
+    } else {
+      setText("bestBahrNote", `التفعيلات المرجعية: ${taf}`);
+    }
+  }
+
+  function applyDetailsToggle(){
+    el("detailsWrap").style.display = el("showDetails").checked ? "block" : "none";
+  }
+  el("showDetails").addEventListener("change", applyDetailsToggle);
+
   function applyAnalysis(){
     try{
       el("errBox").style.display = "none";
@@ -763,32 +946,50 @@
 
       const input = el("bayt").value || "";
       const [s1, s2] = splitShatrain(input);
+      const hasTwo = !!(s2 && s2.trim());
 
       el("baytVisual").innerHTML = markTextVisual(input);
-
-      const al = analyzeALRows(input);
-      renderALTable(al.items);
 
       const a1 = makeArudiShatr(s1 || "");
       const a2 = makeArudiShatr(s2 || "");
 
+      // النص العروضي (تفاصيل)
       setText("arudi1", a1.arudiText || "—");
-      setText("arudi2", (s2.trim() ? (a2.arudiText || "—") : "—"));
+      setText("arudi2", (hasTwo ? (a2.arudiText || "—") : "—"));
 
+      // التحليل للنمط
       const p1 = analyzeShatrDetailedFromArudi(a1.arudiText || "", a1.map || []);
-      const p2 = s2.trim() ? analyzeShatrDetailedFromArudi(a2.arudiText || "", a2.map || []) : {pattern:"", vowelRatio:0, wordRows:[], steps:[]};
+      const p2 = hasTwo ? analyzeShatrDetailedFromArudi(a2.arudiText || "", a2.map || []) : {pattern:"", vowelRatio:0, wordRows:[], steps:[]};
 
       const st = setStateBadge((p1.vowelRatio||0) + (p2.vowelRatio||0));
       setText("vowelState", st.txt, st.cls);
 
       setText("pat1", p1.pattern || "—");
-      setText("pat2", (s2.trim() ? (p2.pattern || "—") : "—"));
+      setText("pat2", (hasTwo ? (p2.pattern || "—") : "—"));
 
-      renderWordTable("w1", p1.wordRows || []);
-      renderWordTable("w2", (s2.trim() ? (p2.wordRows || []) : []));
+      // ====== البحور (على الصفحة الرئيسية) ======
+      const r1 = rankBahrsForShatr(p1.pattern || "");
+      const r2 = hasTwo ? rankBahrsForShatr(p2.pattern || "") : null;
 
-      renderCharSteps("cs1", p1.steps || []);
-      renderCharSteps("cs2", (s2.trim() ? (p2.steps || []) : []));
+      let finalRank = r1;
+      if (hasTwo && r2){
+        finalRank = combineRankings(r1, r2);
+      }
+
+      renderTopBahrs(finalRank);
+      setBestBahr(finalRank && finalRank[0], hasTwo);
+
+      // ====== التفاصيل (الجداول) ======
+      if (el("showDetails").checked){
+        const al = analyzeALRows(input);
+        renderALTable(al.items);
+
+        renderWordTable("w1", p1.wordRows || []);
+        renderWordTable("w2", (hasTwo ? (p2.wordRows || []) : []));
+
+        renderCharSteps("cs1", p1.steps || []);
+        renderCharSteps("cs2", (hasTwo ? (p2.steps || []) : []));
+      }
 
     } catch(e){
       showErr(e);
@@ -799,7 +1000,6 @@
   document.querySelectorAll('input[name="unvowel"]').forEach(r => r.addEventListener("change", applyAnalysis));
 
   el("demo").addEventListener("click", ()=>{
-    // مثال يوضح القاعدة الجديدة: (ضياءُ القمر) قد ينتج ... ضياءُ لْقمر ... فيُحذف الألف الأخيرة لمنع التقاء ساكنين
     el("bayt").value = "وَضِياءُ القَمَرِ في اللَّيْلِ | وَنُورُ القَمَرِ في السَّحَرِ";
     applyAnalysis();
   });
@@ -810,16 +1010,25 @@
     setText("vowelState","—");
     setText("pat1","—");
     setText("pat2","—");
+    setText("bestBahr","—");
+    setText("bestBahrNote","—");
+    el("topBahrs").innerHTML = "<li>—</li>";
+
     setText("arudi1","—");
     setText("arudi2","—");
+
     el("alRows").innerHTML = `<tr><td colspan="5" class="small">اكتبي نصًا ثم اضغطي: حلّل</td></tr>`;
     el("w1").innerHTML = `<tr><td colspan="5" class="small">—</td></tr>`;
     el("w2").innerHTML = `<tr><td colspan="5" class="small">—</td></tr>`;
     el("cs1").innerHTML = `<tr><td colspan="4" class="small">—</td></tr>`;
     el("cs2").innerHTML = `<tr><td colspan="4" class="small">—</td></tr>`;
+
     el("errBox").style.display = "none";
     el("errBox").textContent = "";
   });
+
+  // بداية: التفاصيل مخفية
+  applyDetailsToggle();
 
 })();
 </script>
